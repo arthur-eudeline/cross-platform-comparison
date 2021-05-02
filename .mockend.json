@@ -1,0 +1,8 @@
+{
+  "Posts": {
+    "title": "string",
+    "date": "date",
+    "description": "string",
+    "image": "string"
+  }
+}
