@@ -10,9 +10,33 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject var contentCardList = ContentCardList();
     
+    var body4: some View {
+        GeometryReader{ geometry in
+                ScrollView {
+                    LazyVStack(
+                        alignment: .leading,
+                        spacing: 30,
+                        content: {
+                        ForEach(1...100, id: \.self) { count in
+                            
+                        }
+                    }).padding()
+                }
+            }
+    }
+    
     var body: some View {
-        List(contentCardList) { (content: ContentCardData) in
-            Text("\(content.title)");
+        GeometryReader{ geometry in
+            List(contentCardList) { (content: ContentCardData) in
+                ContentCardBuilder(
+                    screenWidth: geometry.size.width,
+                    data: content
+                )
+                
+                .onAppear {
+                    self.contentCardList.loadMore(currentItem: content)
+                }
+            }
         }
     }
     

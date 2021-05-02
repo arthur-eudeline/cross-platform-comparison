@@ -30,8 +30,11 @@ class ContentCardList: ObservableObject, RandomAccessCollection {
     
     var startIndex: Int { content.startIndex };
     var endIndex: Int { content.endIndex };
+    var currentlyLoading = false;
     
-    var urlBase = "https://jsonplaceholder.typicode.com/posts";
+    var maxPages = 10;
+    var nextPage = 1;
+    var urlBase = "https://raw.githubusercontent.com/arthur-eudeline/cross-platform-comparison/main/fake-api/api-";
     
     init() {
         loadMore()
@@ -41,28 +44,64 @@ class ContentCardList: ObservableObject, RandomAccessCollection {
         return content[ position ];
     }
     
-    func loadMore() {
-        let url = URL(string: urlBase)!
+    func loadMore(currentItem: ContentCardData? = nil ) {
+        
+        if (!shouldLoadMoreData(currentItem: currentItem)) {
+            return;
+        }
+        currentlyLoading = true;
+        
+        let urlString = "\(urlBase)\(nextPage).json"
+        let url = URL(string: urlString)!
         let task = URLSession.shared.dataTask(
             with: url,
             completionHandler: parseFromResponse(data:response:error:)
         );
         task.resume();
+        
+        
+    }
+    
+    func shouldLoadMoreData(currentItem: ContentCardData? = nil ) -> Bool {
+        if self.currentlyLoading || nextPage > (maxPages) {
+            return false;
+        }
+        
+        guard let currentItem = currentItem else {
+            return true;
+        }
+        
+//        guard let lastItem = content.last else {
+//            return true;
+//        }
+//
+        for n in (content.count - 4)...(content.count - 1) {
+            if (n >= 0 && currentItem.uuid == content[n].uuid) {
+                return true;
+            }
+        }
+        
+//        return lastItem.uuid == currentItem.uuid;
+        return false
     }
 
     func parseFromResponse(data: Data?, response: URLResponse?, error: Error?) {
         guard error == nil else {
             print("Error \(error!)")
+            currentlyLoading = false
             return
         }
         guard let data = data else {
             print("No data found")
+            currentlyLoading = false
             return
         }
         
         let contentItem = parseFromData(data: data)
         DispatchQueue.main.async {
             self.content.append(contentsOf: contentItem)
+            self.nextPage += 1;
+            self.currentlyLoading = false
         }
     }
     
@@ -75,10 +114,16 @@ class ContentCardList: ObservableObject, RandomAccessCollection {
             guard let title = itemMap["title"] as? String else {
                 continue;
             };
-            guard let description = itemMap["body"] as? String else {
+            guard let date = itemMap["date"] as? String else {
                 continue;
             };
-            items.append(ContentCardData(title: title, date: "date", image: "image", description: description));
+            guard let imageUrl = itemMap["image"] as? String else {
+                continue;
+            };
+            guard let description = itemMap["description"] as? String else {
+                continue;
+            };
+            items.append(ContentCardData(title: title, date: date, image: imageUrl, description: description));
         }
         return items;
     }
