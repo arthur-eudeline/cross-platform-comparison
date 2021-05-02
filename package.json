@@ -1,0 +1,25 @@
+{
+  "name": "memoire-test-cross-platform",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "memoire-test-cross-platform": "generate-fake-api.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arthur-eudeline/cross-platform-comparison.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arthur-eudeline/cross-platform-comparison/issues"
+  },
+  "homepage": "https://github.com/arthur-eudeline/cross-platform-comparison#readme",
+  "dependencies": {
+    "axios": "^0.21.1"
+  }
+}
