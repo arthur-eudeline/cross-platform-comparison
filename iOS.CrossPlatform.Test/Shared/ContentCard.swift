@@ -12,14 +12,52 @@ class ContentCardData: Identifiable {
     var uuid = UUID();
     var title: String;
     var date: String;
-    var image: String;
+    @ObservedObject var image: ContentCardImage;
     var description: String;
     
     init(title: String, date: String, image: String, description: String) {
         self.title = title;
         self.date = date;
-        self.image = image;
+        self.image = ContentCardImage(url: image);
         self.description = description;
+    }
+}
+
+class ContentCardImage: ObservableObject {
+    var url: String;
+    @Published var loaded = false;
+    
+    @Published var image: UIImage? = nil;
+    
+    init(url:String) {
+        self.url = url;
+    }
+    
+    func load() {
+        print("LOADING \(url)")
+        if (loaded) {
+            return
+        }
+        
+        let url = URL(string: self.url)!
+        let task = URLSession.shared.dataTask(
+            with: url,
+            completionHandler: setImageFromData(data:response:error:)
+        );
+        task.resume();
+    }
+    
+    func setImageFromData(data: Data?, response: URLResponse?, error: Error?) {
+        guard let content = data else {
+            print("ERROR IMAGE NO DATA \(url)")
+            return;
+        }
+        
+        DispatchQueue.main.async {
+            print("LOADED")
+            self.image = UIImage(data: content);
+            self.loaded = true;
+        }
     }
 }
 
@@ -71,17 +109,13 @@ class ContentCardList: ObservableObject, RandomAccessCollection {
             return true;
         }
         
-//        guard let lastItem = content.last else {
-//            return true;
-//        }
-//
+
         for n in (content.count - 4)...(content.count - 1) {
             if (n >= 0 && currentItem.uuid == content[n].uuid) {
                 return true;
             }
         }
         
-//        return lastItem.uuid == currentItem.uuid;
         return false
     }
 
@@ -131,15 +165,37 @@ class ContentCardList: ObservableObject, RandomAccessCollection {
 
 struct PhoneContentCard: View {
     var data: ContentCardData;
+    @ObservedObject var image: ContentCardImage;
+    
+    init(data: ContentCardData) {
+        self.data = data;
+        self.image = data.image
+    }
+
+    func getImage() -> some View {
+        if (image.loaded) {
+            return AnyView(Image(uiImage: image.image!)
+                .resizable()
+                .scaledToFill()
+                .frame(height: 200)
+                .clipped(antialiased: true))
+        }
+        return AnyView(Rectangle()
+            .frame(height: 200)
+            .foregroundColor(/*@START_MENU_TOKEN@*/Color(hue: 1.0, saturation: 0.0, brightness: 0.582)/*@END_MENU_TOKEN@*/))
+        
+    }
     
     var body: some View {
         return VStack() {
-            Image("background")
-                .resizable()
-                .aspectRatio(contentMode: /*@START_MENU_TOKEN@*/.fill/*@END_MENU_TOKEN@*/)
-                .scaledToFill()
-                .frame(width: .infinity)
-                .clipped()
+            Group {
+                getImage()
+            }
+            .onAppear {
+                print("Appeared");
+                image.load()
+            }
+            
         
             VStack() {
                 Text("PUBLISHED AT \(data.date)")
@@ -175,6 +231,14 @@ struct PhoneContentCard: View {
 struct DesktopContentCard: View {
     var data: ContentCardData;
     var screenWidth: CGFloat;
+    @ObservedObject var image: ContentCardImage;
+    
+    init(data: ContentCardData, screenWidth: CGFloat) {
+        self.data = data;
+        self.screenWidth = screenWidth;
+        self.image = data.image
+    }
+
     
     var body: some View {
         return HStack() {

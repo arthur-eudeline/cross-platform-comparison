@@ -10,22 +10,27 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject var contentCardList = ContentCardList();
     
-    var body4: some View {
+    var body: some View {
         GeometryReader{ geometry in
                 ScrollView {
                     LazyVStack(
                         alignment: .leading,
                         spacing: 30,
                         content: {
-                        ForEach(1...100, id: \.self) { count in
-                            
+                            ForEach(contentCardList.content) { content in
+                                ContentCardBuilder(
+                                    screenWidth: geometry.size.width,
+                                    data: content
+                                ).onAppear {
+                                    self.contentCardList.loadMore(currentItem: content)
+                                }
                         }
                     }).padding()
                 }
             }
     }
     
-    var body: some View {
+    var body3: some View {
         GeometryReader{ geometry in
             List(contentCardList) { (content: ContentCardData) in
                 ContentCardBuilder(
@@ -68,7 +73,7 @@ struct ContentView_Previews: PreviewProvider {
     
     static var previews: some View {
         ContentView()
-//            .preferredColorScheme(.dark)
+            .preferredColorScheme(.dark)
 //            .frame(width: 1920.0, height: 1080.0)
             .environment(\.sizeCategory, .extraLarge)
     }
